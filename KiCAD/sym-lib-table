@@ -1,0 +1,9 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "TIL311_DISPLAY")(type "KiCad")(uri "${KIPRJMOD}/TIL311_DISPLAY.kicad_sym")(options "")(descr ""))
+  (lib (name "MM2101_RAM")(type "KiCad")(uri "${KIPRJMOD}/MM2101_RAM.kicad_sym")(options "")(descr ""))
+  (lib (name "CD4023")(type "KiCad")(uri "${KIPRJMOD}/CD4023.kicad_sym")(options "")(descr ""))
+  (lib (name "CD4013B")(type "KiCad")(uri "${KIPRJMOD}/CD4013B.kicad_sym")(options "")(descr ""))
+  (lib (name "CY185-SRAM")(type "KiCad")(uri "${KIPRJMOD}/CY185-SRAM.kicad_sym")(options "")(descr ""))
+  (lib (name "AS6C62256")(type "KiCad")(uri "${KIPRJMOD}/AS6C62256.kicad_sym")(options "")(descr ""))
+)

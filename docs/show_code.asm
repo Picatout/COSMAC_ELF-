@@ -1,0 +1,20 @@
+0 	SEX 2  E2
+1   LDI 0  F8 00 
+3   PLO 2  A2 
+4   PHI 2  B2 
+5   OUT 4  64
+6   LDI 0  F8 00
+8   PLO 3  A3 
+9   PHI 3  B3 
+A	INC 3  13 
+B	GHI 3  93
+C	ADI 80 FC 80
+E	BNF 0A 3B 0A 
+10	GLO 2  82   
+11  SMI 17 FF 17 
+13  BNF 5  3B 05
+15  BR  1  30 01
+ 
+
+
+	
