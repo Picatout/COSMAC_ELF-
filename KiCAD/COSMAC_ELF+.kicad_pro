@@ -420,6 +420,10 @@
     [
       "4e053d2f-1744-48d9-b043-a47cab5e2aa4",
       "CONTROL"
+    ],
+    [
+      "2977e6cd-1f49-4d47-a2cb-d887af48c58f",
+      "xboard"
     ]
   ],
   "text_variables": {}
