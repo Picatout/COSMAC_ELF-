@@ -6299,7 +6299,7 @@
 		)
 		(uuid "0278ee29-6646-4cf4-a45a-b7886b1b6677")
 	)
-	(label "~{EF2}"
+	(label "~{EF3}"
 		(at 224.79 53.34 180)
 		(effects
 			(font
@@ -6309,7 +6309,7 @@
 		)
 		(uuid "0886c043-280f-45a1-b320-b38b1a36cc4a")
 	)
-	(label "~{EF0}"
+	(label "~{EF1}"
 		(at 237.49 55.88 0)
 		(effects
 			(font
@@ -6359,7 +6359,7 @@
 		)
 		(uuid "1a2e4c65-2c50-4215-96fc-0cee20be7fde")
 	)
-	(label "~{EF1}"
+	(label "~{EF2}"
 		(at 237.49 53.34 0)
 		(effects
 			(font
@@ -6529,7 +6529,7 @@
 		)
 		(uuid "766aae31-eb72-4c72-8797-1a50ffad55c0")
 	)
-	(label "~{EF3}"
+	(label "~{EF4}"
 		(at 224.79 55.88 180)
 		(effects
 			(font

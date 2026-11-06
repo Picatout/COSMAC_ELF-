@@ -4798,7 +4798,7 @@
 		)
 		(uuid "683b6034-dbe4-4cbe-b259-fc1cd7d183df")
 	)
-	(label "~{EF3}"
+	(label "~{EF4}"
 		(at 59.69 135.89 180)
 		(effects
 			(font
@@ -4868,7 +4868,7 @@
 		)
 		(uuid "947719e6-9454-415e-87fc-c3cf4ef50d24")
 	)
-	(label "~{EF1}"
+	(label "~{EF2}"
 		(at 72.39 133.35 0)
 		(effects
 			(font
@@ -4938,7 +4938,7 @@
 		)
 		(uuid "b76ea22f-c769-4c03-91a2-ee4531ce058d")
 	)
-	(label "~{EF2}"
+	(label "~{EF3}"
 		(at 59.69 133.35 180)
 		(effects
 			(font
@@ -5048,7 +5048,7 @@
 		)
 		(uuid "f47083ec-9981-47dd-8552-a1425aa5c27a")
 	)
-	(label "~{EF0}"
+	(label "~{EF1}"
 		(at 72.39 135.89 0)
 		(effects
 			(font
@@ -5266,7 +5266,7 @@
 			)
 		)
 	)
-	(global_label "~{EF0}"
+	(global_label "~{EF1}"
 		(shape input)
 		(at 163.83 127 180)
 		(fields_autoplaced yes)
