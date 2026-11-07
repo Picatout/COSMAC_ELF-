@@ -3,7 +3,7 @@
 	(generator "eeschema")
 	(generator_version "9.0")
 	(uuid "becf7d5c-52a9-4eab-944b-d4cc0846a5fb")
-	(paper "A4")
+	(paper "USLetter")
 	(lib_symbols
 		(symbol "74C922:MM74C922"
 			(exclude_from_sim no)
@@ -3719,7 +3719,7 @@
 	)
 	(text "COSMAC ELF+\nhexadecimal keyboard\n"
 		(exclude_from_sim no)
-		(at 178.562 172.466 0)
+		(at 161.29 179.832 0)
 		(effects
 			(font
 				(size 3.81 3.81)
@@ -3747,22 +3747,10 @@
 		(uuid "178c987e-3fad-4602-be79-0fd298108e44")
 	)
 	(junction
-		(at 149.86 135.89)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "3fb30b6a-d4a4-473d-ae4a-29b769016a3a")
-	)
-	(junction
 		(at 121.92 129.54)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "41b03d19-cf84-4033-bebf-a0978d9b917b")
-	)
-	(junction
-		(at 137.16 151.13)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "566a076f-bcf7-4480-a418-9d61fe39a3ff")
 	)
 	(junction
 		(at 102.87 152.4)
@@ -3811,12 +3799,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "99c375e7-6bb4-4d04-b28c-9268023d4df8")
-	)
-	(junction
-		(at 102.87 158.75)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "bf41d89c-7edd-411c-a729-0e2ef71aa684")
 	)
 	(junction
 		(at 111.76 180.34)
@@ -4254,16 +4236,6 @@
 	)
 	(wire
 		(pts
-			(xy 102.87 163.83) (xy 102.87 158.75)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6d63541e-a1ef-43e4-823f-0637dcf25bec")
-	)
-	(wire
-		(pts
 			(xy 72.39 179.07) (xy 81.28 179.07)
 		)
 		(stroke
@@ -4291,6 +4263,16 @@
 			(type default)
 		)
 		(uuid "75537ad7-c751-44ee-b8a0-c190d54826f9")
+	)
+	(wire
+		(pts
+			(xy 149.86 143.51) (xy 149.86 157.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "77a25a92-abd2-4f14-a886-d2f760382a11")
 	)
 	(wire
 		(pts
@@ -4444,16 +4426,6 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 151.13) (xy 137.16 151.13)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ae9115e8-f638-427d-a729-e0542a4d4e05")
-	)
-	(wire
-		(pts
 			(xy 220.98 124.46) (xy 223.52 124.46)
 		)
 		(stroke
@@ -4524,6 +4496,16 @@
 	)
 	(wire
 		(pts
+			(xy 124.46 143.51) (xy 124.46 157.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d43dd079-a521-4311-b3d8-7631f5a6ffb6")
+	)
+	(wire
+		(pts
 			(xy 48.26 179.07) (xy 59.69 179.07)
 		)
 		(stroke
@@ -4551,16 +4533,6 @@
 			(type default)
 		)
 		(uuid "da9f1150-905c-4c26-bf4d-35509467e213")
-	)
-	(wire
-		(pts
-			(xy 100.33 163.83) (xy 102.87 163.83)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "dbc572d3-e99d-44be-ab58-2aa497a6d619")
 	)
 	(wire
 		(pts
@@ -4654,16 +4626,6 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 135.89) (xy 149.86 151.13)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ecca450f-2390-427e-bf58-8b8887beb1da")
-	)
-	(wire
-		(pts
 			(xy 110.49 128.27) (xy 110.49 110.49)
 		)
 		(stroke
@@ -4691,6 +4653,16 @@
 			(type default)
 		)
 		(uuid "ef5ea3bd-9b96-400d-84be-72a5fbf0ee48")
+	)
+	(wire
+		(pts
+			(xy 124.46 157.48) (xy 149.86 157.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f1eb8bba-3117-42e3-8ccf-4fa3efb7760d")
 	)
 	(wire
 		(pts
@@ -5244,22 +5216,22 @@
 	)
 	(global_label "LE"
 		(shape input)
-		(at 124.46 140.97 180)
+		(at 149.86 140.97 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.016 1.016)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "032c2c2e-a9b0-40a5-b98e-7c51acc23bce")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 120.3304 140.97 0)
+			(at 153.9896 140.97 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify right)
+				(justify left)
 				(hide yes)
 			)
 		)
@@ -5326,28 +5298,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "TB"
-		(shape input)
-		(at 92.71 163.83 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.016 1.016)
-			)
-			(justify right)
-		)
-		(uuid "7501da7d-4d69-4eaa-ab6d-9f46a1ecc7fd")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 88.532 163.83 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
 				(hide yes)
 			)
 		)
@@ -5949,7 +5899,7 @@
 				)
 			)
 		)
-		(property "Value" "47K"
+		(property "Value" "1K"
 			(at 102.87 140.97 90)
 			(effects
 				(font
@@ -6489,91 +6439,6 @@
 			(project "COSMAC_ELF+"
 				(path "/1b7c860d-a047-49c4-b807-015568aa5f88/2977e6cd-1f49-4d47-a2cb-d887af48c58f"
 					(reference "R13")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Diode:1N4148")
-		(at 96.52 163.83 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "9d8217b9-8aba-420f-8e92-158cf8ee0bf4")
-		(property "Reference" "D12"
-			(at 94.488 162.306 90)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-			)
-		)
-		(property "Value" "1N4148"
-			(at 98.806 160.782 0)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-			)
-		)
-		(property "Footprint" "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal"
-			(at 96.52 163.83 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/1N4148_1N4448.pdf"
-			(at 96.52 163.83 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "100V 0.15A standard switching diode, DO-35"
-			(at 96.52 163.83 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Sim.Device" "D"
-			(at 96.52 163.83 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Sim.Pins" "1=K 2=A"
-			(at 96.52 163.83 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "2"
-			(uuid "970153ba-621a-4cc3-b03c-72cec5b2e16f")
-		)
-		(pin "1"
-			(uuid "471b58aa-cc0b-4e16-a74f-54d09084c813")
-		)
-		(instances
-			(project "COSMAC_ELF+"
-				(path "/1b7c860d-a047-49c4-b807-015568aa5f88/2977e6cd-1f49-4d47-a2cb-d887af48c58f"
-					(reference "D12")
 					(unit 1)
 				)
 			)
@@ -7158,15 +7023,15 @@
 	(symbol
 		(lib_id "74xx:74HC373")
 		(at 137.16 130.81 0)
+		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "c66be2d1-9ba2-4056-9b4c-067df8242c36")
 		(property "Reference" "U4"
-			(at 139.3033 110.49 0)
+			(at 135.0167 110.49 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7175,7 +7040,7 @@
 			)
 		)
 		(property "Value" "74HC373"
-			(at 139.3033 113.03 0)
+			(at 135.0167 113.03 0)
 			(effects
 				(font
 					(size 1.27 1.27)

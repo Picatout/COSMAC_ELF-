@@ -1,16 +1,17 @@
 						; elf+ Monitor  
-						; Versio 0.1 
+						; Version 0.1 
 						; R2 pointeur de pile 
 						; R3 programme principal 
 						; R4 GETBYTE 
                         ; R5 GETKEY
+                        ; RA registre d'adresse pour les commandes
                         ; RF registre temporaire 
-						; elf+ OS reconnaît 3 commandes 
-						; 01  Modifie la mémoire 
-						; 02  Examine la mémoire 
-						; 03  Exécute un programme 
+						; elf+Mon reconnaît 3 commandes 
+						; 1 aaaa Modifie la mémoire débutant à l'adresse $aaaa 
+						; 2 aaaa Examine la mémoire débutant à l'adresse $aaaa
+						; 3 aaaa Exécute le programme à l'adresse $aaaa
 						; Un programme peut retourner au moniteur 
-						; en faisant un saut à l'adresse $0000
+						; en faisant un saut long à l'adresse $0000
 INIT:
 00  F8 FF       LDI FF      ; initialise R2 comme pointeur de pile
 02  A2          PLO R2      ; à la fin de la mémoire RAM
