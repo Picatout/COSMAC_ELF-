@@ -104,9 +104,9 @@ MODIFY:                       ; code d'opération 01
 47  79          MARK 
 48  D4          SEP GETBYTE   ; appel GETBYTE.
 49  22          DEC R2 
-4A  E1          SEX R1        ; R3 devient le pointeur de donnée.
-4B  51          STR M(R1)     ; dépose D à l'adresse M(R1)
-4C  64          OUT M(R1)     ; affiche M(R1) et R1=R1+1 
+4A  E3          SEX R3        ; R3 devient le pointeur de donnée.
+4B  53          STR M(R3)     ; dépose D à l'adresse M(R1)
+4C  64          OUT M(R3)     ; affiche M(R1) et R1=R1+1 
 4D  30 46       BR MODIFY     ; boucle à MODIFY 
 
 ;-------------------------------
