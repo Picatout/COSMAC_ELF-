@@ -5783,6 +5783,16 @@
 		)
 		(uuid "9063c7fb-38d9-409f-8089-b7b61169b30b")
 	)
+	(text "TX"
+		(exclude_from_sim no)
+		(at 32.258 99.314 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "9ea7c099-65fd-4876-bc83-e67de4f2780d")
+	)
 	(text "PERIPHERAL\nSELECTOR"
 		(exclude_from_sim no)
 		(at 215.9 84.582 0)
@@ -5792,6 +5802,26 @@
 			)
 		)
 		(uuid "9eff5708-3a2f-4458-a7f3-34a3f7064086")
+	)
+	(text "RX"
+		(exclude_from_sim no)
+		(at 32.258 101.854 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "a1c14696-a7f5-4737-8af8-58499cababb0")
+	)
+	(text "GND"
+		(exclude_from_sim no)
+		(at 31.75 96.52 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "b2051e3d-9d10-41f0-af8e-3a9411924840")
 	)
 	(text "SERIAL\nCOMM"
 		(exclude_from_sim no)
@@ -9432,8 +9462,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "100K"
-			(at 112.014 189.992 90)
+		(property "Value" "1M"
+			(at 111.76 188.976 90)
 			(effects
 				(font
 					(size 1.016 1.016)

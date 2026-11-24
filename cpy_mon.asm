@@ -1,22 +1,46 @@
-; copi elf+Mon à l'adresse 8200
-.ORG 8200 
+; copie code de la RAM vers l'EEPROM 
+; R2 STKPTR 
+; R3 PC 
+; R4 SRC 
+; R5 DEST 
+; RF COMPTE 
 
-00  F8 00	    LDI 00 
-02  B4	        PHI R4
-03  A4	        PLO R4
-04  A5	        PLO R5 
-05  F8 80	    LDI 82
-07  B5	        PHI R5
-08  F8 44	    LDI 44  
-0A  AF	        PLO RF
-LOOP:
-0B  44			LDA M(R4)
-0C  55           STD M(R5)	         
-0D  15			INC R5 
-0E  2F			DEC RF 
-0F  8F			GLO RF 
-10  3A 0B   	BNZ LOOP
-12  7B
-13  00 
+; copie les sous-routine de 0x8130 vers 0x1F30
+	ORG 8400H 
+		
+	    LDI 80H 
+        PHI 4
+        LDI 00H
+        PLO 4
+        LDI 1EH
+        PHI 5 
+	    LDI 00H
+        PLO 5
+        LDI 10H   
+        PLO 0Fh
+        LDI 1 
+        PHI 0FH 
+LOOP
+		LDA 4
+        STR 5
+        STR 2
+LP02         
+        LDN 5 
+        XOR 
+        BNZ LP02 	         
+		INC 5 
+		DEC 0FH 
+		GLO 0FH
+		STR 2 
+		GHI 0FH 
+		OR  
+		BNZ LOOP
+		REQ
+		SEQ
+		IDL 
+ 
+	END 
+		
+ 
  
 

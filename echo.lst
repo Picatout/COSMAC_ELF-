@@ -1,0 +1,158 @@
+0000                             ; programme test
+0000                             ; vérification de la communication sérielle
+0000                             ; Renvoie au terminal les caractères reçus de celui-ci.
+0000                             ; routine de base
+0000                             ;    COUT pour transmettre un caractère
+0000                             ;    CIN  pour recevoir un caractère.
+0000                             ; 
+0000                             ;  R3 PC
+0000                             ;  R8 PC CIN
+0000                             ;  R9 PC COUT
+0000                             ; suppose que elf+Mon a initialisé R2 à FFFF
+8000                          .ORG   0x8000   
+8000                DISPLAY:   EQU   4   
+8000                PC_MAIN:   EQU   3   
+8000                PC_CIN:   EQU   8   
+8000                PC_COUT:   EQU   9   
+8000                INIT:        
+8000   7B                     SEQ      ; Q doit-être à 1
+8001   93                     GHI   3   
+8002   B8                     PHI   8   ; adresse CIN>>8
+8003   B9                     PHI   9   ; adresse COUT>>8
+8004   F8 12                  LDI   CIN&0xFF   ; adresse CIN&FF
+8006   A8                     PLO   8   
+8007   F8 38                  LDI   COUT&0xFF   ; adresse COUT&FF 	
+8009   A9                     PLO   9   
+800A                             ; 
+800A                MAIN:        
+800A   D8                     SEP   PC_CIN   ; appel CIN
+800B   9E                     GHI   0xE   ; dépose le caractère dans RE.1
+800C   52                     STR   2   ; M(RX)=D
+800D   64                     OUT   DISPLAY   ; affiche le code ASCII
+800E   22                     DEC   2   ; réajuste R2
+800F                             ;SEP PC_COUT   ; echo C
+800F   30 0A                  BR   MAIN   ; boucle
+8011                             ; 
+8011                CIN_EXIT:      
+8011   D3                     SEP   PC_MAIN   ; retour au programme principal
+8012                CIN:         
+8012   3D 12                  BN2   CIN   ; attend le START bit
+8014   F8 09                  LDI   09   ; initialise le compteur de bits
+8016   AE                     PLO   0xE   ; RE.0 décompte les bits reçus
+8017   F8 00                  LDI   00   ; initialise caractère reçu.
+8019   BE                     PHI   0xE   ; RE.1= C
+801A                BLOOP:       ; bit loop
+801A   F8 05                  LDI   5   ; NN=(52-22)/6
+801C   AF                     PLO   0xF   ; RF compteur de délais
+801D                DLY00:       ; boucle délais de bit
+801D   2F                     DEC   0XF   
+801E   8F                     GLO   0xF   
+801F   3A 1D                  BNZ   DLY00   
+8021   9E                     GHI   0xE   ; D=C
+8022   F6                     SHR      ; décale C à droite
+8023   35 29                  B2   DLY02   ; si ~EF2=1 va à DLY02, bit 7 reste à 0
+8025   F9 80                  ORI   0x80   ; met bit 7 à 1
+8027   30 29                  BR   DLY02   ; ajustement pour délais
+8029                DLY02:       
+8029   BE                     PHI   0xE   ; sauvegarde C dans RF.1
+802A   2E                     DEC   0xE   
+802B   8E                     GLO   0xE   ; si non nul
+802C   3A 1A                  BNZ   BLOOP   ;reçoit bit suivant
+802E                STOP:        ; attend stop bit
+802E   F8 05                  LDI   05   
+8030   AF                     PLO   0xF   ; délais STOP bit
+8031                SLOOP:       
+8031   2F                     DEC   0xF   ; décrémente RF
+8032   8F                     GLO   0xF   ; si non nul
+8033   3A 31                  BNZ   SLOOP   ; boucle
+8035   30 11                  BR   CIN_EXIT   ; 
+8037                             ; 
+8037                             ;-------------------------------
+8037                             ; COUT
+8037                             ; PC=R5
+8037                             ; transmet un caractère au
+8037                             ; terminal.
+8037                             ; paramètre:
+8037                             ;   caractère à envoyé dans RE.1
+8037                             ;--------------------------------
+8037                COUT_EXIT:      
+8037   D3                     SEP   PC_MAIN   ; retour au programme principal
+8038                COUT:        ; 
+8038                             ; Envoie d'un caractère ASCII sur Q
+8038                             ; RE.1 contient le caractère à envoyer.
+8038                             ; RE.0 compteur de bits
+8038   F8 09                  LDI   9   ; bits count incluant start bit
+803A   AE                     PLO   0xE   ; dans RE.0
+803B                BIT_LOOP:      
+803B   9E                     GHI   0xE   ; D=caractère
+803C   76                     SHRC      ; bit 0 dans DF, DF dans bit 7
+803D   BE                     PHI   0xE   ; RE.1=C>>1
+803E   3B 43                  BNF   NUL   ; bit à zéro
+8040   7B                     SEQ      ; bit==1
+8041   30 46                  BR   B_DLY   
+8043                NUL:         ; bit==0
+8043   7A                     REQ      
+8044   30 46                  BR   B_DLY   ; burn 2 more T
+8046                B_DLY:       
+8046   F8 05                  LDI   5   ; N=(52-22)/6
+8048   AF                     PLO   0xF   ; 
+8049                BIT_DLY:      ; boucle durée de bit
+8049   2F                     DEC   0xF   
+804A   8F                     GLO   0xF   
+804B   3A 49                  BNZ   BIT_DLY   
+804D   2E                     DEC   0xE   ; décrément le compteur de bits
+804E   8E                     GLO   0xE   ; RE.1=D
+804F   3A 3B                  BNZ   BIT_LOOP   ; pas terminé l'envoie
+8051   8E                     GLO   0xE   ; délais supplémentaire
+8052   8E                     GLO   0xE   ; pour le dernier bit 4T
+8053   F8 05                  LDI   5   ; délais N=(52-22)/6
+8055   AF                     PLO   0xF   ; sont pour le timing
+8056   7B                     SEQ      ;  STOP bit
+8057                STP_DLY:      ; délais du stop BIT
+8057   2F                     DEC   0xF   
+8058   8F                     GLO   0xF   
+8059   3A 57                  BNZ   STP_DLY   
+805B   30 37                  BR   COUT_EXIT   ; terminé.
+
+
+DISPLAY:            0004 DEFINED AT LINE 16
+                    > USED AT LINE 35
+PC_MAIN:            0003 DEFINED AT LINE 17
+                    > USED AT LINE 42
+                    > USED AT LINE 84
+PC_CIN:             0008 DEFINED AT LINE 18
+                    > USED AT LINE 32
+PC_COUT:            0009 DEFINED AT LINE 19
+INIT:               8000 DEFINED AT LINE 21
+MAIN:               800A DEFINED AT LINE 31
+                    > USED AT LINE 38
+CIN_EXIT:           8011 DEFINED AT LINE 41
+                    > USED AT LINE 73
+CIN:                8012 DEFINED AT LINE 43
+                    > USED AT LINE 26
+                    > USED AT LINE 44
+BLOOP:              801A DEFINED AT LINE 49
+                    > USED AT LINE 65
+DLY00:              801D DEFINED AT LINE 52
+                    > USED AT LINE 55
+DLY02:              8029 DEFINED AT LINE 61
+                    > USED AT LINE 58
+                    > USED AT LINE 60
+STOP:               802E DEFINED AT LINE 66
+SLOOP:              8031 DEFINED AT LINE 69
+                    > USED AT LINE 72
+COUT_EXIT:          8037 DEFINED AT LINE 83
+                    > USED AT LINE 120
+COUT:               8038 DEFINED AT LINE 85
+                    > USED AT LINE 28
+BIT_LOOP:           803B DEFINED AT LINE 91
+                    > USED AT LINE 110
+NUL:                8043 DEFINED AT LINE 98
+                    > USED AT LINE 95
+B_DLY:              8046 DEFINED AT LINE 101
+                    > USED AT LINE 97
+                    > USED AT LINE 100
+BIT_DLY:            8049 DEFINED AT LINE 104
+                    > USED AT LINE 107
+STP_DLY:            8057 DEFINED AT LINE 116
+                    > USED AT LINE 119
