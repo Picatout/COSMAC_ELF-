@@ -205,10 +205,10 @@ NEXTHEX
 			SMI 10          ; si < 10 DIGIT  
 			BNF  DIGIT 
 			GLO TMP 
-			SMI 17 
+			SMI 11H 
 			BNF NOTHEX 
 			GLO TMP 
-			SMI 24
+			SMI 17H
 			BDF NOTHEX  
 			GLO TMP         
 			SMI 7            ; A..F
@@ -264,11 +264,11 @@ EE_WAIT			       ; écrire dans l'EEPROM prend minimum 1msec
 			INC ENDADR 
 			BR  NEXTITEM
 RUN						 ; copy XAMADR dans R0
-			GHI  XAMADR 
+			GHI  ENDADR 
 			PHI  0 
-			GLO  XAMADR 
+			GLO  ENDADR 
 			PLO  0
-			SEP  0       ; exécutre programme à cette adresse.
+			SEP  0        ; exécutre programme à cette adresse.
 XAM_BLOCK                 ; examine un block mémoire 
 			GHI LAST 
 			PHI ENDADR 

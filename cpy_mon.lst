@@ -7,38 +7,37 @@
                         
                         ; copie les sous-routine de 0x8130 vers 0x1F30
                   	ORG 8400H 
-                        
+                        		
    8400   f8 80         	    LDI 80H 
    8402   b4                    PHI 4
    8403   f8 00                 LDI 00H
    8405   a4                    PLO 4
-   8406   f8 1e                 LDI 1EH
-   8408   b5                    PHI 5 
-   8409   f8 00         	    LDI 00H
-   840b   a5                    PLO 5
-   840c   f8 10                 LDI 10H   
-   840e   af                    PLO 0Fh
-   840f   f8 01                 LDI 1 
-   8411   bf                    PHI 0FH 
+   8406   a5                    PLO 5
+   8407   f8 1e                 LDI 1EH
+   8409   b5                    PHI 5 
+   840a   f8 10                 LDI 10H   
+   840c   af                    PLO 0Fh
+   840d   f8 01                 LDI 1 
+   840f   bf                    PHI 0FH 
                   LOOP
-   8412   44            		LDA 4
-   8413   55                    STR 5
-   8414   52                    STR 2
+   8410   44            		LDA 4
+   8411   55                    STR 5
+   8412   52                    STR 2
                   LP02         
-   8415   05                    LDN 5 
-   8416   f3                    XOR 
-   8417   3a 15                 BNZ LP02 	         
-   8419   15            		INC 5 
-   841a   2f            		DEC 0FH 
-   841b   8f            		GLO 0FH
-   841c   52            		STR 2 
-   841d   9f            		GHI 0FH 
-   841e   f1            		OR  
-   841f   3a 12         		BNZ LOOP
-   8421   7a            		REQ
-   8422   7b            		SEQ
-   8423   00            		IDL 
+   8413   05                    LDN 5 
+   8414   f3                    XOR 
+   8415   3a 13                 BNZ LP02 	         
+   8417   15            		INC 5 
+   8418   2f            		DEC 0FH 
+   8419   8f            		GLO 0FH
+   841a   52            		STR 2 
+   841b   9f            		GHI 0FH 
+   841c   f1            		OR  
+   841d   3a 10         		BNZ LOOP
+   841f   7a            		REQ
+   8420   7b            		SEQ
+   8421   00            		IDL 
                          
                   	END 
-8412  LOOP          8415  LP02          
+8410  LOOP          8413  LP02          
 

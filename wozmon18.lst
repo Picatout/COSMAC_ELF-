@@ -205,10 +205,10 @@
    8090   ff 0a         			SMI 10          ; si < 10 DIGIT  
    8092   3b a2         			BNF  DIGIT 
    8094   80            			GLO TMP 
-   8095   ff 11         			SMI 17 
+   8095   ff 11         			SMI 11H 
    8097   3b b7         			BNF NOTHEX 
    8099   80            			GLO TMP 
-   809a   ff 18         			SMI 24
+   809a   ff 17         			SMI 17H
    809c   33 b7         			BDF NOTHEX  
    809e   80            			GLO TMP         
    809f   ff 07         			SMI 7            ; A..F
@@ -264,11 +264,11 @@
    80d5   1b            			INC ENDADR 
    80d6   30 6d         			BR  NEXTITEM
                   RUN						 ; copy XAMADR dans R0
-   80d8   9a            			GHI  XAMADR 
+   80d8   9b            			GHI  ENDADR 
    80d9   b0            			PHI  0 
-   80da   8a            			GLO  XAMADR 
+   80da   8b            			GLO  ENDADR 
    80db   a0            			PLO  0
-   80dc   d0            			SEP  0       ; exécutre programme à cette adresse.
+   80dc   d0            			SEP  0        ; exécutre programme à cette adresse.
                   XAM_BLOCK                 ; examine un block mémoire 
    80dd   9c            			GHI LAST 
    80de   bb            			PHI ENDADR 

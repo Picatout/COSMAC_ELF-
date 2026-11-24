@@ -12,10 +12,9 @@
         PHI 4
         LDI 00H
         PLO 4
+        PLO 5
         LDI 1EH
         PHI 5 
-	    LDI 00H
-        PLO 5
         LDI 10H   
         PLO 0Fh
         LDI 1 

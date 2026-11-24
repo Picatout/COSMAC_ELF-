@@ -1,0 +1,28 @@
+                  		org 8400h
+                        		
+   8400   f8 1e         		ldi 0e1h 
+   8402   b4            		phi 4 
+   8403   f8 00         		ldi 0
+   8405   a4            		plo 4
+   8406   a5            		plo 5
+   8407   af            		plo 0fh 
+   8408   f8 80         		ldi 80h 
+   840a   b5            		phi 5
+   840b   f8 02         		ldi 2
+   840d   bf            		phi 0fh 
+                  loop
+   840e   44            		lda 4
+   840f   55            		str 5 
+   8410   15            		inc 5 
+   8411   2f            		dec 15 
+   8412   8f            		glo 15
+   8413   52            		str 2 
+   8414   9f            		ghi 15 
+   8415   f1            		or 
+   8416   3a 0e         		bnz loop 
+   8418   7b            		seq
+   8419   00            		idl 
+                         
+                  		end 
+840e  loop          
+
