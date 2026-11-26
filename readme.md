@@ -23,7 +23,7 @@ Le **elf+**  est différent de l'original au niveau de la mémoire. Alors que l'
 
 ![elf+ contrôle](docs/elf+%20control.png)
 
-![elf+ carte d'extention](docs/elf+xboard.png)
+![elf+ carte d'extention](docs/elf+%20xboard.png)
 
 ## Assembleur utilisé 
 
