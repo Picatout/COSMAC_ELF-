@@ -23,6 +23,10 @@ Le **elf+**  est différent de l'original au niveau de la mémoire. Alors que l'
 
 ![elf+ contrôle](docs/elf+%20control.png)
 
+## Assembleur utilisé 
+
+Pour l'assemblage des programmes j'utilise [A18](https://github.com/carangil/A18). Mais il y a aussi  l'assembleur [WEB ASM80](https://beta.asm80.com/asm/1802)
+
 ## Vidéos 
 
 J'ai créé une liste de lecture de [vidéos](https://www.youtube.com/playlist?list=PLE1bJN-R7BZ8) sur Youtube 

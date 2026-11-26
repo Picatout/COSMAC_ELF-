@@ -1,0 +1,563 @@
+                        ; wozmon pour COSMAC elf+  
+                        ; version 1.1
+                        ; Ce programme reprend les fonctionnalités 
+                        ; de la première version du moniteur du Apple I 
+                        ; Créé par Steve Wozniak 
+                        ; Le elf+ communique avec le terminal 
+                        ; à 9600 BAUD, 8 bits, 1 STOP bit 
+                        ; La sortie Q du CDP1802 sert de sortie sérielle.
+                        ; le flag externe ~EF2 sert d'entrée sérielle.
+                        ; La routine COUT assure la sérialisation de l'octet à envoyer.
+                        ; La routine CIN assure la désérialisation de l'octet reçu.
+                        ; La routine PUTS permet d'envoyer une chaîne de caractère. 
+                        ; dans ce qui suit:
+                        ;  aaaa   représente une adresse en hexadécimal 
+                        ;  bb     représente un octet en hexadécimal 
+                        ;  <CR>     représente un retour à la ligne code ASCII 0xD 
+                        ; fonctionnalités:
+                        ;  aaaa<CR>    affiche le contenu de la mémoire à l'adresse aaaa
+                        ;  aaaa.aaaa<CR> affiche le contenu de la mémoire dans l'intervalle d'adresse 
+                        ;  aaaa: bb ...<CR>  modifie le contenu de la mémoire à partir de l'adresse aaaa
+                        ;                avec les octets qui suivent l'adresse.
+                        ;  aaaaGCR   exécute le programme à l'adresse aaaa
+                        ;
+                        ;  utilisation des registres 
+                        ;  R1 pointeur de donnée pour tampon texte 
+                        ;  R2 pointeur de pile à initialisé à 0xFFFF
+                        ;  R3 PC du moniteur 
+                        ;  R4 PC de la routine CIN 
+                        ;  R5 PC de la routine COUT 
+                        ;  R6 PC de la routine PUTS 
+                        ;  RA adresse début de la plage mémoire 
+                        ;  RB adresse fin de la plage mémoire
+                        ;  RE.1  caractère reçu ou envoyé
+                        ;  RE.0  compteur de bits pour CIN et COUT 
+                        ;  RF.0  compteur délais de bit
+                        ;
+                        ;------------------------------------------------
+                        ; Ce programme doit-être assemblé avec 
+                        ; a18 
+                        ; ref: https://github.com/carangil/A18
+                        ;------------------------------------------------
+                        ;
+                        ;----------------
+                        ; constantes
+                        ;----------------
+                        
+                        			CPU 1802
+                        			
+                        ; caractères ASCII 
+                  BS      	EQU 8H    ; back space 
+                  CR      	EQU 0DH    ; carriage return 
+                  ESC     	EQU 1BH    ; caractère ESCAPE 
+                  SPC     	EQU 20H    ; caractère espace 
+                  SHARP   	EQU 23H   ; '#' 
+                  DOT     	EQU 2EH    ; '.' 
+                  COL     	EQU 3AH    ; ':'
+                  TICK    	EQU 60H    ; ` 
+                        
+                  TMP     	EQU 0       ; R0 usage temporaire 
+                  STPTR     	EQU 1       ; pointeur de chaîne
+                  SP      	EQU 2       ; pointeur de pile 
+                  PC_MAIN 	EQU 3       ; PC routine principale 
+                  PC_CIN  	EQU 4       ; PC routine CIN 
+                  PC_COUT 	EQU 5       ; PC routine COUT 
+                  PC_PUTS 	EQU 6       ; PC routine PUTS 
+                  PC_ECHO 	EQU 7       ; PC routine ECHO 
+                  PC_PRHEX 	EQU 8       ; PC routine PRHEX 
+                  PC_EEWAIT   EQU 9       ; PC routine EE_STORE
+                  XAMADR  	EQU 0AH     ; pointeur adresse début intervalle  
+                  ENDADR  	EQU 0BH     ; pointeur adresse fin intervalle  
+                  LAST    	EQU 0CH     ; dernière valeur hexadécimale interprétée
+                  MODE    	EQU 0DH     ; mode dans RD.0 
+                  BCNTR   	EQU 0EH     ; compteur de bits RE.0
+                  DCNTR   	EQU 0FH     ; compteur de délais RF.0
+                  TPTR    	EQU 1       ; pointeur des transactions terminal 
+                  STKTOP      EQU 0FFFFH  ; stack empty address, réserve  16 octets 
+                  TIB     	EQU STKTOP-128-16+1  ; tampon de réception des commandes, réserve 128 octets 
+                  EEWAIT_ADR  EQU 0FF00H  ; routine copiée sous le TIB  
+                        
+                  			ORG 1E00H  
+                        
+                        ;---------------------------------------------------
+                        ; suppose que le moniteur a été lancé à partir 
+                        ; de elf+Mon et qu'en conséquence certaines 
+                        ; initialisation sont déjà faite, tel que:
+                        ;   interruptions déjà désactivé
+                        ;   R2 déjà configuré comme pointeur de pile à 0xFFFF
+                        ;   R3 est le PC pour ce programme.		
+                        ;---------------------------------------------------
+                  INIT
+   1e00   7b            			  SEQ
+                        			   				    ; il faut garder Q à 1 par défaut.
+   1e01   93            			  GHI PC_MAIN 
+   1e02   fc 01         			  ADI 1             ; sous-routines dans la page suivante
+   1e04   b4            			  PHI PC_CIN		; PC de CIN 
+   1e05   b5            			  PHI PC_COUT		; PC de COUT 
+   1e06   b6            			  PHI PC_PUTS		; PC de PUTS 
+   1e07   b7            			  PHI PC_ECHO		; PC de ECHO 
+   1e08   b8            			  PHI PC_PRHEX     	; PC de PRHEX 
+   1e09   f8 5a         			  LDI  LOW CIN      	; initialisation de  la partie basse 
+   1e0b   a4            			  PLO  PC_CIN   	; des PC des sous-routines
+   1e0c   f8 89         			  LDI  LOW COUT     	;
+   1e0e   a5            			  PLO  PC_COUT  	;
+   1e0f   f8 b5         			  LDI  LOW PUTS   	;
+   1e11   a6            			  PLO  PC_PUTS  	;
+   1e12   f8 82         			  LDI  LOW ECHO 
+   1e14   a7            			  PLO  PC_ECHO 
+   1e15   f8 31         			  LDI  LOW PRHEX 
+   1e17   a8            			  PLO  PC_PRHEX
+   1e18   f8 ff         			  LDI  HIGH EEWAIT_ADR
+   1e1a   b9            			  PHI  PC_EEWAIT
+   1e1b   bb            			  PHI  ENDADR        ; destination pour la copie 
+   1e1c   f8 24         			  LDI  LOW EEWAIT 
+   1e1e   a9            			  PLO  PC_EEWAIT
+                        ; copie EEWAIT dans la RAM à EEWAIT_ADR-1 
+   1e1f   f8 1f         			  LDI HIGH EEWAIT 
+   1e21   ba            			  PHI XAMADR 
+   1e22   f8 23         			  LDI LOW EEWAIT-1  
+   1e24   aa            			  PLO XAMADR 
+   1e25   ab            			  PLO ENDADR 
+   1e26   f8 07         			  LDI  EEWAIT_END-EEWAIT_EXIT  ; nombre d'octets à copier
+   1e28   af            			  PLO  DCNTR       
+                  COPY_EEWAIT			  
+   1e29   0a            			  LDN  XAMADR 
+   1e2a   5b            			  STR  ENDADR 
+   1e2b   1a            			  INC  XAMADR 
+   1e2c   1b            			  INC  ENDADR 
+   1e2d   2f            			  DEC  DCNTR 
+   1e2e   8f            			  GLO  DCNTR  
+   1e2f   3a 29         			  BNZ  COPY_EEWAIT 
+   1e31   f8 00         			  LDI  0  
+   1e33   ba            			  PHI  XAMADR       ; initialise ce pointeur 
+   1e34   aa            			  PLO  XAMADR       ; à l'adresse 0x0000
+                        			   
+                        ;--------------------------------------
+                        ; routine principale 
+                        ; PC=R3
+                        ;--------------------------------------		
+                  MAIN
+   1e35   f8 1f         			LDI  HIGH SIGN      ; page de ce programme 
+   1e37   b1            			PHI  STPTR          ; initialise le pointeur de chaîne 
+   1e38   f8 be         			LDI  LOW SIGN       ; avec l'adresse de SIGN 
+   1e3a   a1            			PLO  STPTR          ; et appel PUTS   
+   1e3b   79            			MARK                ; pour imprimer le
+   1e3c   d6            			SEP  PC_PUTS        ; message 
+   1e3d   22            			DEC  SP             ; décrémente le pointeur de pile 
+                  GETLINE                         ; réception de la commande 
+   1e3e   f8 0d         			LDI  CR             ; passe à la ligne suivante 
+   1e40   d7            			SEP  PC_ECHO 
+   1e41   f8 23         			LDI  SHARP          ; envoie le caratère '#' au terminal 
+   1e43   d7            			SEP  PC_ECHO 
+   1e44   f8 ff         			LDI HIGH TIB        ; initialise le tampon de réception   
+   1e46   b1            			PHI TPTR            ; des commandes *TIB=0xFE00 
+   1e47   f8 70         			LDI LOW TIB    
+   1e49   a1            			PLO TPTR      
+   1e4a   30 55         			BR  NEXTCHAR 
+                  BACKSPACE
+   1e4c   81            		    GLO TPTR
+   1e4d   fb 70         		    XRI LOW TIB  
+   1e4f   32 55         		    BZ  NEXTCHAR 
+   1e51   f8 08         		    LDI BS 
+   1e53   d7            		    SEP PC_ECHO 
+   1e54   21            		    DEC TPTR  
+                  NEXTCHAR 
+   1e55   79            		    MARK 
+   1e56   d4            		    SEP PC_CIN 
+   1e57   22            		    DEC SP 
+   1e58   a0            		    PLO TMP 
+   1e59   fb 08         		    XRI BS 
+   1e5b   32 4c         		    BZ  BACKSPACE 
+   1e5d   80            		    GLO TMP  
+   1e5e   fb 1b         		    XRI ESC 
+   1e60   32 3e         		    BZ  GETLINE 
+   1e62   80            		    GLO TMP 
+   1e63   ff 60         		    SMI TICK
+   1e65   80            		    GLO TMP  
+   1e66   3b 6a         		    BNF UPPER  
+   1e68   fa df         			ANI 0DFH 		; met lettre en majuscule
+                  UPPER
+   1e6a   51            			STR TPTR 
+   1e6b   d7            			SEP PC_ECHO 
+   1e6c   41            			LDA TPTR
+   1e6d   fb 0d         			XRI CR 
+   1e6f   3a 55         			BNZ NEXTCHAR  
+                  INTERPRET 					; interprète la commande 
+   1e71   8a            			GLO XAMADR      ; copie XAMADR 
+   1e72   ab            			PLO ENDADR      ; dans LAST 
+   1e73   9a            			GHI XAMADR      ;
+   1e74   bb            			PHI ENDADR      ;
+   1e75   f8 ff         			LDI HIGH TIB    ; remet le pointeur au début du tampon    
+   1e77   b1            			PHI TPTR        ; des commandes *TIB=0xFE00 
+   1e78   f8 6f         			LDI LOW TIB-1    
+   1e7a   a1            			PLO TPTR      
+   1e7b   f8 00         			LDI 0
+   1e7d   a0            			PLO TMP 
+                  SETMODE 
+   1e7e   80            			GLO TMP 
+   1e7f   ad            			PLO MODE        ; mode d'opération 
+                  BLSKP                      ; saute les espaces 
+   1e80   11            			INC  TPTR 
+   1e81   01            			LDN  TPTR
+   1e82   fb 20         			XRI  SPC         ; espace? 
+   1e84   32 80         			BZ   BLSKP       ; ignore 
+                  NEXTITEM
+   1e86   01            			LDN TPTR        ; reprend le caractère dans TMP 
+   1e87   a0            			PLO TMP 
+   1e88   fb 0d         			XRI CR          ; fin de la commande?
+   1e8a   32 3e         			BZ  GETLINE     ; si oui retourne au début 
+   1e8c   80            			GLO TMP   
+   1e8d   ff 2e         			SMI  DOT         ; '.'? 
+   1e8f   3b 80         			BNF BLSKP        ; ignore les caractères < '.'
+   1e91   32 7e         			BZ SETMODE      ; 1=EXAMINE BLOCK  
+   1e93   80            			GLO TMP 
+   1e94   fb 3a         			XRI COL 
+   1e96   32 7e         			BZ  SETMODE 
+   1e98   80            			GLO TMP  
+   1e99   fb 47         			XRI 'G'         ; 'G' go exétute un programme 
+   1e9b   32 ee         			BZ  RUN 
+   1e9d   81            			GLO TPTR 
+   1e9e   b0            			PHI TMP         ; conserve la position de TPTR          
+                                                    ; il faut que ce soit un entier en hexadécimal 
+   1e9f   f8 00         			LDI 0           ; initialise le registre qui reçoit l'entier
+   1ea1   ac            			PLO LAST        ; à zéro 
+   1ea2   bc            			PHI LAST 
+                  NEXTHEX
+   1ea3   01            			LDN TPTR  
+   1ea4   ff 30         			SMI 30H         ; soustrait '0' 
+   1ea6   3b d0         			BNF NOTHEX      ; caractère invalide retourne au début 
+   1ea8   a0            			PLO TMP         ; conserve cette valeur
+   1ea9   ff 0a         			SMI 10          ; si < 10 DIGIT  
+   1eab   3b bb         			BNF  DIGIT 
+   1ead   80            			GLO TMP 
+   1eae   ff 11         			SMI 11H 
+   1eb0   3b d0         			BNF NOTHEX 
+   1eb2   80            			GLO TMP 
+   1eb3   ff 17         			SMI 17H
+   1eb5   33 d0         			BDF NOTHEX  
+   1eb7   80            			GLO TMP         
+   1eb8   ff 07         			SMI 7            ; A..F
+   1eba   a0            			PLO TMP   
+                  DIGIT			 
+   1ebb   80            		    GLO TMP 
+   1ebc   52            		    STR SP          ; met sur la pile 
+   1ebd   f8 04         		    LDI 4           ; LAST= 16 * LAST + M(SP)
+   1ebf   af            		    PLO DCNTR        
+                  MULT16                  ;  16*LAST, décale last 4 bits vers la gauche
+   1ec0   8c            			GLO LAST 
+   1ec1   fe            			SHL 
+   1ec2   ac            			PLO LAST  
+   1ec3   9c            			GHI LAST  
+   1ec4   7e            			SHLC 
+   1ec5   bc            			PHI LAST  
+   1ec6   2f            			DEC DCNTR 
+   1ec7   8f            			GLO DCNTR 
+   1ec8   3a c0         			BNZ MULT16  
+   1eca   8c            			GLO LAST
+   1ecb   f4            			ADD 
+   1ecc   ac            			PLO LAST
+   1ecd   11            			INC TPTR 
+   1ece   30 a3         			BR NEXTHEX 
+                  NOTHEX
+   1ed0   90            			GHI TMP       ; position initiale de TPTR 
+   1ed1   52            			STR SP        ; EMPILE 
+   1ed2   81            			GLO TPTR 
+   1ed3   f5            			SD            ; M(RX)-D 
+   1ed4   32 3e         			BZ  GETLINE  
+                  GOTNUMBER
+   1ed6   8d            			GLO  MODE     ; MODE ?  
+   1ed7   3a e3         			BNZ NOTREAD   ; 
+   1ed9   8c            			GLO LAST      ;sI MODE==0 copie LAST  
+   1eda   aa            			PLO XAMADR    ;dans XAMADR 
+   1edb   ab            			PLO ENDADR    ;et ENDADR 
+   1edc   9c            			GHI LAST 
+   1edd   ba            			PHI XAMADR 
+   1ede   bb            			PHI ENDADR
+   1edf   f8 00         			LDI 0  
+   1ee1   30 fa         			BR  NXTPRNT    
+                  NOTREAD
+   1ee3   fb 2e         			XRI DOT   
+   1ee5   32 f3         			BZ  XAM_BLOCK 
+                  STORE
+   1ee7   8c            			GLO LAST
+   1ee8   5b            			STR ENDADR
+   1ee9   52            			STR SP 
+   1eea   d9            			SEP PC_EEWAIT 
+   1eeb   1b            			INC ENDADR 
+   1eec   30 86         			BR  NEXTITEM
+                  RUN						 ; copy XAMADR dans R0
+   1eee   9b            			GHI  ENDADR 
+   1eef   b0            			PHI  0 
+   1ef0   8b            			GLO  ENDADR 
+   1ef1   a0            			PLO  0
+   1ef2   d0            			SEP  0        ; exécutre programme à cette adresse.
+                  XAM_BLOCK                 ; examine un block mémoire 
+   1ef3   9c            			GHI LAST 
+   1ef4   bb            			PHI ENDADR 
+   1ef5   8c            			GLO LAST 
+   1ef6   ab            			PLO ENDADR  
+   1ef7   c0 1f 07      			LBR  PRDATA
+                  NXTPRNT                  
+   1efa   ca 1f 07      			LBNZ  PRDATA   ; si D<>0 imprime la valeur de LAST&0XFF
+   1efd   f8 0d         			LDI  CR       ; si D=0 imprime la valeur de XAMADR 
+   1eff   d7            			SEP PC_ECHO 
+   1f00   9a            			GHI  XAMADR 
+   1f01   d8            			SEP  PC_PRHEX
+   1f02   8a            			GLO XAMADR 
+   1f03   d8            			SEP  PC_PRHEX 
+   1f04   f8 3a         			LDI COL 
+   1f06   d7            			SEP PC_ECHO 
+                  PRDATA
+   1f07   f8 20         		    LDI SPC 
+   1f09   d7            		    SEP PC_ECHO 
+   1f0a   0a            		    LDN XAMADR 
+   1f0b   d8            		    SEP PC_PRHEX 
+   1f0c   1a            		    INC XAMADR 
+   1f0d   8b            		    GLO ENDADR  
+   1f0e   52            		    STR SP 
+   1f0f   8a            		    GLO XAMADR 
+   1f10   f5            		    SD   
+   1f11   9b            		    GHI ENDADR  
+   1f12   52            		    STR SP 
+   1f13   9a            		    GHI XAMADR 
+   1f14   75            		    SDB 
+   1f15   cb 1e 86      		    LBNF NEXTITEM
+                  MOD16CHK                  ; nouvelle ligne à tous les 16 octets
+   1f18   8a            		    GLO XAMADR 
+   1f19   fa 0f         		    ANI 15 
+   1f1b   ca 1f 07      		    LBNZ PRDATA 
+   1f1e   f8 00         		    LDI 0 
+   1f20   c0 1e fa      		    LBR NXTPRNT
+                        
+                        ;------------------------------------
+                        ; la routine STORE doit-être 
+                        ; copiée en RAM pour pouvoir modifier 
+                        ; L'EEPROM 
+                        ;-----------------------------------
+                  EEWAIT_EXIT
+   1f23   d3            		    SEP PC_MAIN  
+                  EEWAIT			       ; écrire dans l'EEPROM prend minimum 1msec
+   1f24   0b            			LDN ENDADR 
+   1f25   f3            			XOR 
+   1f26   3a 24         			BNZ EEWAIT 
+   1f28   30 23         			BR  EEWAIT_EXIT
+                  EEWAIT_END
+                        		     
+                        ;--------------------------------------
+                        ; sous-routines 
+                        ;---------------------------------------
+                        			
+                  			ORG 1F30H 
+                        			
+                        ;---------------------------------------
+                        ; PRHEX 
+                        ; imprime un octetet en hexadécimal 
+                        ; paramètre:
+                        ;    D
+                        ; sortie:
+                        ;    TOP  digit fort 
+                        ;    NEXT digit faible 
+                        ;--------------------------------------- 
+                  PRHEX_EXIT
+   1f30   d3            			SEP PC_MAIN 
+                  PRHEX 
+   1f31   a0            			PLO TMP 
+   1f32   f6            			SHR         ; D/16
+   1f33   f6            			SHR 
+   1f34   f6            			SHR 
+   1f35   f6            			SHR 
+   1f36   fc 30         			ADI '0'  
+   1f38   52            			STR  SP 
+   1f39   ff 3a         			SMI  COL
+   1f3b   3b 41         			BNF   PRH01 
+   1f3d   f8 07         			LDI  7 
+   1f3f   f4            			ADD
+   1f40   52            			STR SP  
+                  PRH01
+   1f41   f0            			LDX 
+   1f42   79            			MARK 
+   1f43   d5            			SEP PC_COUT 
+   1f44   22            			DEC SP 
+   1f45   80            			GLO TMP 
+   1f46   fa 0f         			ANI 0FH 
+   1f48   fc 30         			ADI '0' 
+   1f4a   52            			STR SP 
+   1f4b   ff 3a         			SMI COL
+   1f4d   3b 53         			BNF PRH02 
+   1f4f   f8 07         			LDI 7 
+   1f51   f4            			ADD 
+   1f52   52            			STR SP 
+                  PRH02		
+   1f53   f0            			LDX 
+   1f54   79            			MARK 
+   1f55   d5            			SEP  PC_COUT 
+   1f56   22            			DEC  SP 
+   1f57   30 30         			BR   PRHEX_EXIT
+                        			
+                        			
+                        ;--------------------------------------
+                        ; CIN 
+                        ; reçoit un caractère du terminal 
+                        ; PC=R4
+                        ; paramètre:
+                        ;   caractère reçu retourné dans D
+                        ;--------------------------------------
+                  CIN_EXIT
+   1f59   71                          DIS            ; retour au programme principal  
+                  CIN
+   1f5a   e2                          SEX SP         ; X = stack pointer
+                  CIN01               
+   1f5b   3d 5b                       BN2 CIN01        ; attend le START bit  
+   1f5d   f8 09                       LDI 09         ; initialise le compteur de bits  
+   1f5f   ae                          PLO BCNTR      ; RE.0 décompte les bits reçus
+   1f60   f8 00                       LDI 00         ; initialise caractère reçu.
+   1f62   52                          STR SP         ; TOP = caractère  
+                  BLOOP                       ; bit loop 
+   1f63   f8 05                       LDI 5          ; NN=(52-22)/6 
+   1f65   af                          PLO DCNTR      ; RF compteur de délais 
+                  DLY00                       ; boucle délais de bit
+   1f66   2f                          DEC DCNTR 
+   1f67   8f                          GLO DCNTR
+   1f68   3a 66                       BNZ DLY00   
+   1f6a   f0                          LDX            ; D=C
+   1f6b   f6                          SHR            ; décale C à droite 
+   1f6c   35 72                       B2  DLY02      ; si ~EF2=1 va à DLY02, bit 7 reste à 0  
+   1f6e   f9 80                       ORI 80H       ; met bit 7 à 1  
+   1f70   30 72                       BR  DLY02      ; ajustement pour délais
+                  DLY02
+   1f72   52                          STR SP         ; sauvegarde C dans RF.1
+   1f73   2e                          DEC BCNTR  
+   1f74   8e                          GLO BCNTR      ; si non nul  
+   1f75   3a 63                       BNZ BLOOP      ;reçoit bit suivant
+                  STOP                        ; attend stop bit 
+   1f77   f8 05                       LDI 05 
+   1f79   af                          PLO DCNTR      ; délais STOP bit  
+                  SLOOP      
+   1f7a   2f                          DEC DCNTR      ; décrémente RF 
+   1f7b   8f                          GLO DCNTR       ; si non nul 
+   1f7c   3a 7a                       BNZ SLOOP      ; boucle 
+   1f7e   72            	          LDXA           ; D=caractère,  incrémente SP 
+   1f7f   30 59         	          BR CIN_EXIT    ; 
+                        
+                        
+                        ;-----------------------------------
+                        ; ECHO 
+                        ; PC=R7
+                        ; paramètre: 
+                        ;    D     caractère à envoyer
+                        ;------------------------------------
+                  ECHO_EXIT  
+   1f81   d3            			  SEP PC_MAIN 
+                  ECHO
+   1f82   79            			  MARK
+   1f83   d5            			  SEP  PC_COUT 
+   1f84   22            			  DEC  SP 
+   1f85   30 81         			  BR   ECHO_EXIT 
+                        			 
+                        ;-------------------------------
+                        ; COUT 
+                        ; PC=R5 
+                        ; transmet un caractère au 
+                        ; terminal. 
+                        ; paramètre:
+                        ;   caractère à envoyer dans  
+                        ;   D 
+                        ;--------------------------------
+                  COUT_EXIT		
+   1f87   12                          INC SP        ; incrémente stack pointer
+   1f88   71                          DIS           ; sortie de sous-routine  
+                  COUT  					    ; 
+                                                    ; Envoie d'un caractère ASCII sur Q 
+                        							; RE.1 contient le caractère à envoyer.
+                        							; RE.0 compteur de bits 
+   1f89   e2                          SEX SP        ; X= stack pointer
+   1f8a   52                          STR SP        ; TOP = caractère à envoyer
+   1f8b   f8 09                       LDI 9         ; bits count incluant start bit 
+   1f8d   ae                          PLO BCNTR     ; dans RE.0
+   1f8e   f0                          LDX           ; D=caractère
+   1f8f   fe                          SHL           ; shift left 1 bit
+   1f90   52                          STR SP       
+                  BIT_LOOP
+   1f91   f0                          LDX           ; D=caractère 
+   1f92   76                          SHRC          ; bit 0 dans DF, DF dans bit 7  
+   1f93   52                          STR SP        ; RE.1=C>>1
+   1f94   3b 99                       BNF NUL       ; bit à zéro 
+   1f96   7b                          SEQ           ; bit==1
+   1f97   30 9c                       BR B_DLY  
+                  NUL                        ; bit==0
+   1f99   7a                          REQ
+   1f9a   30 9c                       BR B_DLY      ; burn 2 more T 
+                  B_DLY 
+   1f9c   f8 05                       LDI 5         ; N=(52-22)/6 
+   1f9e   af                          PLO DCNTR     ; 
+                  BIT_DLY                    ; boucle durée de bit 
+   1f9f   2f                          DEC DCNTR        
+   1fa0   8f                          GLO DCNTR
+   1fa1   3a 9f                       BNZ BIT_DLY 
+   1fa3   2e                          DEC BCNTR     ; décrément le compteur de bits 
+   1fa4   8e                          GLO BCNTR     ; RE.1=D
+   1fa5   3a 91                       BNZ BIT_LOOP  ; pas terminé l'envoie 
+   1fa7   8e                          GLO BCNTR     ; remplissage pour ajouter 
+   1fa8   8e                          GLO BCNTR     ; 4T de délais supplémentaire
+   1fa9   f8 05                       LDI 5         ; délais N=(52-22)/6 
+   1fab   af                          PLO DCNTR     ; sont pour le timing 
+   1fac   7b                          SEQ           ;  STOP bit
+                  STP_DLY                    ; délais du stop BIT 
+   1fad   2f            			  DEC DCNTR
+   1fae   8f            			  GLO DCNTR
+   1faf   3a ad         			  BNZ STP_DLY  	
+   1fb1   30 87                       BR COUT_EXIT  ; terminé.  
+                        
+                        ;-------------------------------------
+                        ; PUTS
+                        ; PC=R6 
+                        ; envoie une chaîne de 
+                        ; caractères au terminal
+                        ; paramètre:
+                        ;    R1 adresse de la chaîne 
+                        ;-------------------------------------
+                  PUTS_EXIT  
+   1fb3   12            			  INC SP        ; incrémente stack pointer 
+   1fb4   71                          DIS           ; retouren à l'appellant 
+                  PUTS 
+   1fb5   e2                          SEX SP        ; X=stack pointer 
+   1fb6   41            			  LDA  STPTR      ; D=M(R1), R1=R1+1
+   1fb7   32 b3         			  BZ PUTS_EXIT  ; si D nul exit
+   1fb9   79                          MARK          ; T=X,P M(R2)=X,P R2-1 
+   1fba   d5                          SEP PC_COUT   ; PC=R6
+   1fbb   22            			  DEC SP        ; réajuste R2 
+   1fbc   30 b5                       BR  PUTS      ; boucle pour le prochain carractère.
+                        
+                  SIGN
+   1fbe   43 4f 53 4d   			TEXT "COSMAC elf+ monitor, V1.0"
+   1fc2   41 43 20 65   
+   1fc6   6c 66 2b 20   
+   1fca   6d 6f 6e 69   
+   1fce   74 6f 72 2c   
+   1fd2   20 56 31 2e   
+   1fd6   30            
+   1fd7   0d 00         			BYTE CR,0
+                        
+                        		
+                  			END 
+1e4c  BACKSPACE     000e  BCNTR         1f9f  BIT_DLY       1f91  BIT_LOOP  
+1f63  BLOOP         1e80  BLSKP         0008  BS            1f9c  B_DLY     
+1f5a  CIN           1f5b  CIN01         1f59  CIN_EXIT      003a  COL       
+1e29  COPY_EEWAIT    1f89  COUT          1f87  COUT_EXIT     000d  CR        
+000f  DCNTR         1ebb  DIGIT         1f66  DLY00         1f72  DLY02     
+002e  DOT           1f82  ECHO          1f81  ECHO_EXIT     1f24  EEWAIT    
+ff00  EEWAIT_ADR    1f2a  EEWAIT_END    1f23  EEWAIT_EXIT    000b  ENDADR    
+001b  ESC           1e3e  GETLINE       1ed6  GOTNUMBER     1e00  INIT      
+1e71  INTERPRET     000c  LAST          1e35  MAIN          1f18  MOD16CHK  
+000d  MODE          1ec0  MULT16        1e55  NEXTCHAR      1ea3  NEXTHEX   
+1e86  NEXTITEM      1ed0  NOTHEX        1ee3  NOTREAD       1f99  NUL       
+1efa  NXTPRNT       0004  PC_CIN        0005  PC_COUT       0007  PC_ECHO   
+0009  PC_EEWAIT     0003  PC_MAIN       0008  PC_PRHEX      0006  PC_PUTS   
+1f07  PRDATA        1f41  PRH01         1f53  PRH02         1f31  PRHEX     
+1f30  PRHEX_EXIT    1fb5  PUTS          1fb3  PUTS_EXIT     1eee  RUN       
+1e7e  SETMODE       0023  SHARP         1fbe  SIGN          1f7a  SLOOP     
+0002  SP            0020  SPC           ffff  STKTOP        1f77  STOP      
+1ee7  STORE         0001  STPTR         1fad  STP_DLY       ff70  TIB       
+0060  TICK          0000  TMP           0001  TPTR          1e6a  UPPER     
+000a  XAMADR        1ef3  XAM_BLOCK     
+

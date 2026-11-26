@@ -75,9 +75,9 @@ DCNTR   	EQU 0FH     ; compteur de délais RF.0
 TPTR    	EQU 1       ; pointeur des transactions terminal 
 STKTOP      EQU 0FFFFH  ; stack empty address, réserve  16 octets 
 TIB     	EQU STKTOP-128-16+1  ; tampon de réception des commandes, réserve 128 octets 
-EEWAIT_ADR  EQU TIB-15  ; routine copiée sous le TIB  
+EEWAIT_ADR  EQU 0FF00H  ; routine copiée sous le TIB  
 
-			ORG 8000H  
+			ORG 1E00H  
 
 ;---------------------------------------------------
 ; suppose que le moniteur a été lancé à partir 
@@ -89,14 +89,14 @@ EEWAIT_ADR  EQU TIB-15  ; routine copiée sous le TIB
 ;---------------------------------------------------
 INIT
 			  SEQ
-			  NOP				; il faut garder Q à 1 par défaut.
-			  LDI HIGH COUT     ; HIGH PC_MAIN 
+			   				    ; il faut garder Q à 1 par défaut.
+			  GHI PC_MAIN 
+			  ADI 1             ; sous-routines dans la page suivante
 			  PHI PC_CIN		; PC de CIN 
 			  PHI PC_COUT		; PC de COUT 
 			  PHI PC_PUTS		; PC de PUTS 
 			  PHI PC_ECHO		; PC de ECHO 
 			  PHI PC_PRHEX     	; PC de PRHEX 
-			  PHI PC_EESTOR     
 			  LDI  LOW CIN      	; initialisation de  la partie basse 
 			  PLO  PC_CIN   	; des PC des sous-routines
 			  LDI  LOW COUT     	;
@@ -109,25 +109,24 @@ INIT
 			  PLO  PC_PRHEX
 			  LDI  HIGH EEWAIT_ADR
 			  PHI  PC_EEWAIT
-			  LDI  LOW EEWAIT_ADR 
+			  PHI  ENDADR        ; destination pour la copie 
+			  LDI  LOW EEWAIT 
 			  PLO  PC_EEWAIT
 ; copie EEWAIT dans la RAM à EEWAIT_ADR-1 
 			  LDI HIGH EEWAIT 
 			  PHI XAMADR 
 			  LDI LOW EEWAIT-1  
 			  PLO XAMADR 
-			  LDI HIGH EEWAIT_ADR 	
-			  PHI ENDADR 
-			  LDI LOW EEWAIT_ADR-1 
-			  PLO ENDADR
-			  LDI  16           ; copie 16 octets
-			  PLO  15
+			  PLO ENDADR 
+			  LDI  EEWAIT_END-EEWAIT_EXIT  ; nombre d'octets à copier
+			  PLO  DCNTR       
 COPY_EEWAIT			  
 			  LDN  XAMADR 
 			  STR  ENDADR 
 			  INC  XAMADR 
 			  INC  ENDADR 
-			  DEC  15 
+			  DEC  DCNTR 
+			  GLO  DCNTR  
 			  BNZ  COPY_EEWAIT 
 			  LDI  0  
 			  PHI  XAMADR       ; initialise ce pointeur 
@@ -297,9 +296,9 @@ XAM_BLOCK                 ; examine un block mémoire
 			PHI ENDADR 
 			GLO LAST 
 			PLO ENDADR  
-			BR  PRDATA
+			LBR  PRDATA
 NXTPRNT                  
-			BNZ  PRDATA   ; si D<>0 imprime la valeur de LAST&0XFF
+			LBNZ  PRDATA   ; si D<>0 imprime la valeur de LAST&0XFF
 			LDI  CR       ; si D=0 imprime la valeur de XAMADR 
 			SEP PC_ECHO 
 			GHI  XAMADR 
@@ -322,7 +321,7 @@ PRDATA
 		    STR SP 
 		    GHI XAMADR 
 		    SDB 
-		    BNF NEXTITEM
+		    LBNF NEXTITEM
 MOD16CHK                  ; nouvelle ligne à tous les 16 octets
 		    GLO XAMADR 
 		    ANI 15 
@@ -335,19 +334,20 @@ MOD16CHK                  ; nouvelle ligne à tous les 16 octets
 ; copiée en RAM pour pouvoir modifier 
 ; L'EEPROM 
 ;-----------------------------------
-EEWAIT_EXIT:
+EEWAIT_EXIT
 		    SEP PC_MAIN  
-EE_WAIT			       ; écrire dans l'EEPROM prend minimum 1msec
+EEWAIT			       ; écrire dans l'EEPROM prend minimum 1msec
 			LDN ENDADR 
 			XOR 
-			BNZ EE_WAIT 
+			BNZ EEWAIT 
 			BR  EEWAIT_EXIT
+EEWAIT_END
 		     
 ;--------------------------------------
 ; sous-routines 
 ;---------------------------------------
 			
-			ORG 8130H 
+			ORG 1F30H 
 			
 ;---------------------------------------
 ; PRHEX 
