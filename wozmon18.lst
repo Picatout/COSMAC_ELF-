@@ -257,7 +257,7 @@
    80ce   8c            			GLO LAST
    80cf   5b            			STR ENDADR
    80d0   52            			STR SP 
-                  EE_WAIT			       ; écrire dans l'EEPROM prend minimum 1msec
+             DB BB 9B AB DB     EE_WAIT			       ; écrire dans l'EEPROM prend minimum 1msec
    80d1   0b            			LDN ENDADR 
    80d2   f3            			XOR 
    80d3   3a d1         			BNZ EE_WAIT 

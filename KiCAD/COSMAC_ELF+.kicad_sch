@@ -8742,7 +8742,7 @@
 				)
 			)
 		)
-		(property "Value" "2MHZ"
+		(property "Value" "4MHZ"
 			(at 110.49 59.436 0)
 			(effects
 				(font

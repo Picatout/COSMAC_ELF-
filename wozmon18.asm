@@ -1,4 +1,5 @@
-; wozmon pour COSMAC elf+
+; wozmon pour COSMAC elf+  
+; version 1.1
 ; Ce programme reprend les fonctionnalités 
 ; de la première version du moniteur du Apple I 
 ; Créé par Steve Wozniak 
@@ -64,6 +65,7 @@ PC_COUT 	EQU 5       ; PC routine COUT
 PC_PUTS 	EQU 6       ; PC routine PUTS 
 PC_ECHO 	EQU 7       ; PC routine ECHO 
 PC_PRHEX 	EQU 8       ; PC routine PRHEX 
+PC_EEWAIT   EQU 9       ; PC routine EE_STORE
 XAMADR  	EQU 0AH     ; pointeur adresse début intervalle  
 ENDADR  	EQU 0BH     ; pointeur adresse fin intervalle  
 LAST    	EQU 0CH     ; dernière valeur hexadécimale interprétée
@@ -73,6 +75,7 @@ DCNTR   	EQU 0FH     ; compteur de délais RF.0
 TPTR    	EQU 1       ; pointeur des transactions terminal 
 STKTOP      EQU 0FFFFH  ; stack empty address, réserve  16 octets 
 TIB     	EQU STKTOP-128-16+1  ; tampon de réception des commandes, réserve 128 octets 
+EEWAIT_ADR  EQU TIB-15  ; routine copiée sous le TIB  
 
 			ORG 8000H  
 
@@ -93,6 +96,7 @@ INIT
 			  PHI PC_PUTS		; PC de PUTS 
 			  PHI PC_ECHO		; PC de ECHO 
 			  PHI PC_PRHEX     	; PC de PRHEX 
+			  PHI PC_EESTOR     
 			  LDI  LOW CIN      	; initialisation de  la partie basse 
 			  PLO  PC_CIN   	; des PC des sous-routines
 			  LDI  LOW COUT     	;
@@ -103,7 +107,29 @@ INIT
 			  PLO  PC_ECHO 
 			  LDI  LOW PRHEX 
 			  PLO  PC_PRHEX
-			  LDI  0 
+			  LDI  HIGH EEWAIT_ADR
+			  PHI  PC_EEWAIT
+			  LDI  LOW EEWAIT_ADR 
+			  PLO  PC_EEWAIT
+; copie EEWAIT dans la RAM à EEWAIT_ADR-1 
+			  LDI HIGH EEWAIT 
+			  PHI XAMADR 
+			  LDI LOW EEWAIT-1  
+			  PLO XAMADR 
+			  LDI HIGH EEWAIT_ADR 	
+			  PHI ENDADR 
+			  LDI LOW EEWAIT_ADR-1 
+			  PLO ENDADR
+			  LDI  16           ; copie 16 octets
+			  PLO  15
+COPY_EEWAIT			  
+			  LDN  XAMADR 
+			  STR  ENDADR 
+			  INC  XAMADR 
+			  INC  ENDADR 
+			  DEC  15 
+			  BNZ  COPY_EEWAIT 
+			  LDI  0  
 			  PHI  XAMADR       ; initialise ce pointeur 
 			  PLO  XAMADR       ; à l'adresse 0x0000
 			   
@@ -257,10 +283,7 @@ STORE
 			GLO LAST
 			STR ENDADR
 			STR SP 
-EE_WAIT			       ; écrire dans l'EEPROM prend minimum 1msec
-			LDN ENDADR 
-			XOR 
-			BNZ EE_WAIT 
+			SEP PC_EEWAIT 
 			INC ENDADR 
 			BR  NEXTITEM
 RUN						 ; copy XAMADR dans R0
@@ -306,6 +329,19 @@ MOD16CHK                  ; nouvelle ligne à tous les 16 octets
 		    LBNZ PRDATA 
 		    LDI 0 
 		    LBR NXTPRNT
+
+;------------------------------------
+; la routine STORE doit-être 
+; copiée en RAM pour pouvoir modifier 
+; L'EEPROM 
+;-----------------------------------
+EEWAIT_EXIT:
+		    SEP PC_MAIN  
+EE_WAIT			       ; écrire dans l'EEPROM prend minimum 1msec
+			LDN ENDADR 
+			XOR 
+			BNZ EE_WAIT 
+			BR  EEWAIT_EXIT
 		     
 ;--------------------------------------
 ; sous-routines 
